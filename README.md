@@ -4,7 +4,7 @@ Parses a link header and returns paging information for each contained link.
 
 # Install
 
-    npm install parse-link-header
+    npm install @web3-storage/parse-link-header
 
 # Usage
 
