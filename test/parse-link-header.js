@@ -1,206 +1,246 @@
-'use strict';
-/*jshint asi: true */
+import tape from 'tape'
+import { parseLinkHeader as parse } from '../index.js'
 
-var test = require('tape').test
-var parse = require('..')
+const test = tape.test
 
 test('parsing a proper link header with next and last', function (t) {
-  var link = 
-    '<https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=2&per_page=100>; rel="next", ' + 
+  const link =
+    '<https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=2&per_page=100>; rel="next", ' +
     '<https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=3&per_page=100>; rel="last"'
 
-  var res = parse(link)
   t.deepEqual(
-      parse(link)
-    , { next:
-        { client_id: '1',
+    parse(link)
+    , {
+      next:
+        {
+          client_id: '1',
           client_secret: '2',
           page: '2',
           per_page: '100',
           rel: 'next',
-          url: 'https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=2&per_page=100' },
-        last:
-        { client_id: '1',
+          url: 'https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=2&per_page=100'
+        },
+      last:
+        {
+          client_id: '1',
           client_secret: '2',
           page: '3',
           per_page: '100',
           rel: 'last',
-          url: 'https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=3&per_page=100' } }
+          url: 'https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=3&per_page=100'
+        }
+    }
     , 'parses out link, page and perPage for next and last'
   )
   t.end()
 })
 
 test('handles unquoted relationships', function (t) {
-  var link = 
-    '<https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=2&per_page=100>; rel=next, ' + 
+  const link =
+    '<https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=2&per_page=100>; rel=next, ' +
     '<https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=3&per_page=100>; rel=last'
 
-  var res = parse(link)
   t.deepEqual(
-      parse(link)
-    , { next:
-        { client_id: '1',
+    parse(link)
+    , {
+      next:
+        {
+          client_id: '1',
           client_secret: '2',
           page: '2',
           per_page: '100',
           rel: 'next',
-          url: 'https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=2&per_page=100' },
-        last:
-        { client_id: '1',
+          url: 'https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=2&per_page=100'
+        },
+      last:
+        {
+          client_id: '1',
           client_secret: '2',
           page: '3',
           per_page: '100',
           rel: 'last',
-          url: 'https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=3&per_page=100' } }
+          url: 'https://api.github.com/user/9287/repos?client_id=1&client_secret=2&page=3&per_page=100'
+        }
+    }
     , 'parses out link, page and perPage for next and last'
   )
   t.end()
 })
 
 test('parsing a proper link header with next, prev and last', function (t) {
-  var linkHeader = 
-    '<https://api.github.com/user/9287/repos?page=3&per_page=100>; rel="next", ' + 
-    '<https://api.github.com/user/9287/repos?page=1&per_page=100>; rel="prev", ' + 
+  const linkHeader =
+    '<https://api.github.com/user/9287/repos?page=3&per_page=100>; rel="next", ' +
+    '<https://api.github.com/user/9287/repos?page=1&per_page=100>; rel="prev", ' +
     '<https://api.github.com/user/9287/repos?page=5&per_page=100>; rel="last"'
 
-  var res = parse(linkHeader)
-  
   t.deepEqual(
-      parse(linkHeader)
-    , { next:
-        { page: '3',
+    parse(linkHeader)
+    , {
+      next:
+        {
+          page: '3',
           per_page: '100',
           rel: 'next',
-          url: 'https://api.github.com/user/9287/repos?page=3&per_page=100' },
-        prev:
-        { page: '1',
+          url: 'https://api.github.com/user/9287/repos?page=3&per_page=100'
+        },
+      prev:
+        {
+          page: '1',
           per_page: '100',
           rel: 'prev',
-          url: 'https://api.github.com/user/9287/repos?page=1&per_page=100' },
-        last:
-        { page: '5',
+          url: 'https://api.github.com/user/9287/repos?page=1&per_page=100'
+        },
+      last:
+        {
+          page: '5',
           per_page: '100',
           rel: 'last',
-          url: 'https://api.github.com/user/9287/repos?page=5&per_page=100' } }
+          url: 'https://api.github.com/user/9287/repos?page=5&per_page=100'
+        }
+    }
     , 'parses out link, page and perPage for next, prev and last'
   )
   t.end()
 })
 
 test('parsing an empty link header', function (t) {
-  var linkHeader = '' 
-  var res = parse(linkHeader)
-  
-  t.equal( parse(linkHeader) , null , 'returns null')
+  const linkHeader = ''
+  t.equal(parse(linkHeader), null, 'returns null')
   t.end()
 })
 
 test('parsing a proper link header with next and a link without rel', function (t) {
-  var linkHeader = 
-    '<https://api.github.com/user/9287/repos?page=3&per_page=100>; rel="next", ' + 
+  const linkHeader =
+    '<https://api.github.com/user/9287/repos?page=3&per_page=100>; rel="next", ' +
     '<https://api.github.com/user/9287/repos?page=1&per_page=100>; pet="cat", '
 
-  var res = parse(linkHeader)
-  
   t.deepEqual(
-      parse(linkHeader)
-    , { next:
-        { page: '3',
+    parse(linkHeader)
+    , {
+      next:
+        {
+          page: '3',
           per_page: '100',
           rel: 'next',
-          url: 'https://api.github.com/user/9287/repos?page=3&per_page=100' } }
+          url: 'https://api.github.com/user/9287/repos?page=3&per_page=100'
+        }
+    }
     , 'parses out link, page and perPage for next only'
   )
   t.end()
 })
 
 test('parsing a proper link header with next and properties besides rel', function (t) {
-  var linkHeader = 
+  const linkHeader =
     '<https://api.github.com/user/9287/repos?page=3&per_page=100>; rel="next"; hello="world"; pet="cat"'
 
-  var res = parse(linkHeader)
-  
   t.deepEqual(
-      parse(linkHeader)
-    , { next:
-        { page: '3',
+    parse(linkHeader)
+    , {
+      next:
+        {
+          page: '3',
           per_page: '100',
           rel: 'next',
           hello: 'world',
           pet: 'cat',
-          url: 'https://api.github.com/user/9287/repos?page=3&per_page=100' } }
+          url: 'https://api.github.com/user/9287/repos?page=3&per_page=100'
+        }
+    }
     , 'parses out link, page and perPage for next and all other properties'
   )
   t.end()
 })
 
 test('parsing a proper link header with a comma in the url', function (t) {
-  var linkHeader = 
+  const linkHeader =
     '<https://imaginary.url.notreal/?name=What,+me+worry>; rel="next";'
 
-  var res = parse(linkHeader)
-  
   t.deepEqual(
-      parse(linkHeader)
-    , { next:
-        { rel: 'next',
+    parse(linkHeader)
+    , {
+      next:
+        {
+          rel: 'next',
           name: 'What, me worry',
-          url: 'https://imaginary.url.notreal/?name=What,+me+worry' } }
+          url: 'https://imaginary.url.notreal/?name=What,+me+worry'
+        }
+    }
     , 'correctly parses URL with comma'
   )
   t.end()
 })
 
 test('parsing a proper link header with a multi-word rel', function (t) {
-  var linkHeader =
+  const linkHeader =
     '<https://imaginary.url.notreal/?name=What,+me+worry>; rel="next page";'
 
-  var res = parse(linkHeader)
-
   t.deepEqual(
-      parse(linkHeader)
-    , { page: { rel: 'page',
-          name: 'What, me worry',
-          url: 'https://imaginary.url.notreal/?name=What,+me+worry' },
-        next: { rel: 'next',
-          name: 'What, me worry',
-          url: 'https://imaginary.url.notreal/?name=What,+me+worry' }}
+    parse(linkHeader)
+    , {
+      page: {
+        rel: 'page',
+        name: 'What, me worry',
+        url: 'https://imaginary.url.notreal/?name=What,+me+worry'
+      },
+      next: {
+        rel: 'next',
+        name: 'What, me worry',
+        url: 'https://imaginary.url.notreal/?name=What,+me+worry'
+      }
+    }
     , 'correctly parses multi-word rels'
   )
   t.end()
 })
 
 test('parsing a proper link header with matrix parameters', function (t) {
-  var linkHeader =
+  const linkHeader =
     '<https://imaginary.url.notreal/segment;foo=bar;baz/item?name=What,+me+worry>; rel="next";'
 
-  var res = parse(linkHeader)
-
   t.deepEqual(
-      parse(linkHeader)
-    , { next: { rel: 'next',
-          name: 'What, me worry',
-          url: 'https://imaginary.url.notreal/segment;foo=bar;baz/item?name=What,+me+worry' }}
+    parse(linkHeader)
+    , {
+      next: {
+        rel: 'next',
+        name: 'What, me worry',
+        url: 'https://imaginary.url.notreal/segment;foo=bar;baz/item?name=What,+me+worry'
+      }
+    }
     , 'correctly parses url with matrix parameters'
   )
   t.end()
 })
 
 test('parsing an extremely long link header', function (t) {
-  function payload (n) {
-    var ret = ""
-    for (var i = 0; i < n; i++) {
-      ret += " "
-    }
-    return ret
-    }
-  var linkHeader = '; rel="' + payload(10000) + '",'
+  const linkHeader = '; rel="' + Array(10000).join(' ') + '",'
 
   t.equal(
-      parse(linkHeader)
+    parse(linkHeader)
     , null
     , 'correctly returns null when dealing with an extremely long link header'
+  )
+  t.end()
+})
+
+test('parsing a long link header with configured max length', function (t) {
+  const maxHeaderLength = 5
+  const linkHeader = '; rel="' + Array(maxHeaderLength).join(' ') + '",'
+
+  t.equal(
+    parse(linkHeader, { maxHeaderLength })
+    , null
+    , `correctly returns null when parsing a header with > ${maxHeaderLength} characters`
+  )
+  t.end()
+})
+
+test('parsing a long link header throws when max length exceeded', function (t) {
+  const maxHeaderLength = 5
+  const linkHeader = '; rel="' + Array(maxHeaderLength).join(' ') + '",'
+
+  t.throws(
+    () => parse(linkHeader, { maxHeaderLength, throwOnMaxHeaderLengthExceeded: true })
   )
   t.end()
 })

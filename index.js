@@ -1,71 +1,73 @@
-'use strict';
+const MAX_HEADER_LENGTH = 2000
+const THROW_ON_MAX_HEADER_LENGTH_EXCEEDED = false
 
-const PARSE_LINK_HEADER_MAXLEN = parseInt(process.env.PARSE_LINK_HEADER_MAXLEN) || 2000;
-const PARSE_LINK_HEADER_THROW_ON_MAXLEN_EXCEEDED = process.env.PARSE_LINK_HEADER_THROW_ON_MAXLEN_EXCEEDED != null
-
-function hasRel(x) {
-  return x && x.rel;
+function hasRel (x) {
+  return x && x.rel
 }
 
 function intoRels (acc, x) {
   function splitRel (rel) {
-    acc[rel] = Object.assign({}, x, { rel: rel });
+    acc[rel] = Object.assign({}, x, { rel: rel })
   }
 
-  x.rel.split(/\s+/).forEach(splitRel);
+  x.rel.split(/\s+/).forEach(splitRel)
 
-  return acc;
+  return acc
 }
 
 function createObjects (acc, p) {
   // rel="next" => 1: rel 2: next
-  var m = p.match(/\s*(.+)\s*=\s*"?([^"]+)"?/)
-  if (m) acc[m[1]] = m[2];
-  return acc;
+  const m = p.match(/\s*(.+)\s*=\s*"?([^"]+)"?/)
+  if (m) acc[m[1]] = m[2]
+  return acc
 }
 
-function parseLink(link) {
+function parseLink (link) {
   try {
-    var m         =  link.match(/<?([^>]*)>(.*)/)
-      , linkUrl   =  m[1]
-      , parts     =  m[2].split(';')
-      , qry       = {};
+    const m = link.match(/<?([^>]*)>(.*)/)
+    const linkUrl = m[1]
+    const parts = m[2].split(';')
+    const qry = {}
 
     for (const [key, value] of new URL(linkUrl).searchParams) {
-      qry[key] = value;
+      qry[key] = value
     }
 
-    parts.shift();
+    parts.shift()
 
-    var info = parts
-      .reduce(createObjects, {});
-
-    info = Object.assign({}, qry, info);
-    info.url = linkUrl;
-    return info;
-  } catch (e) {
-    return null;
+    let info = parts.reduce(createObjects, {})
+    info = Object.assign({}, qry, info)
+    info.url = linkUrl
+    return info
+  } catch {
+    return null
   }
 }
 
-function checkHeader(linkHeader){
-  if (!linkHeader) return false;
+function checkHeader (linkHeader, options) {
+  if (!linkHeader) return false
 
-  if (linkHeader.length > PARSE_LINK_HEADER_MAXLEN) {
-    if (PARSE_LINK_HEADER_THROW_ON_MAXLEN_EXCEEDED) {
-      throw new Error('Input string too long, it should be under ' + PARSE_LINK_HEADER_MAXLEN + ' characters.');
+  options = options || {}
+  const maxHeaderLength = options.maxHeaderLength || MAX_HEADER_LENGTH
+  const throwOnMaxHeaderLengthExceeded = options.throwOnMaxHeaderLengthExceeded || THROW_ON_MAX_HEADER_LENGTH_EXCEEDED
+
+  if (linkHeader.length > maxHeaderLength) {
+    if (throwOnMaxHeaderLengthExceeded) {
+      throw new Error('Input string too long, it should be under ' + maxHeaderLength + ' characters.')
     } else {
-        return false;
-      }
+      return false
+    }
   }
-  return true;
+  return true
 }
 
-module.exports = function (linkHeader) {
-  if (!checkHeader(linkHeader)) return null;
+function parseLinkHeader (linkHeader, options) {
+  if (!checkHeader(linkHeader, options)) return null
 
   return linkHeader.split(/,\s*</)
-   .map(parseLink)
-   .filter(hasRel)
-   .reduce(intoRels, {});
-};
+    .map(parseLink)
+    .filter(hasRel)
+    .reduce(intoRels, {})
+}
+
+export { parseLinkHeader }
